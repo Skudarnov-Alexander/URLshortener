@@ -1,36 +1,28 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"html/template"
 	"io"
 	"log"
-	"math/rand"
 	"net/http"
 	"strconv"
 	"strings"
 	"time"
 )
 
-type Data struct {
-	LongURL      string
-	ExpDate      string
-	CreationDate string
-	ShortURL     string
-}
-
-type DataBase map[string]Data
 
 var tpl *template.Template
 var db DataBase
 
 func init() {
-	tpl = template.Must(template.ParseFiles("templates/home.html", "templates/applyProcess.html"))
+	tpl = template.Must(template.ParseFiles("views/home.html", "views/applyProcess.html"))
 
 }
 
 func main() {
-	db = make(DataBase) // Аллокация памяти мапы
+	db = make(DataBase) // Аллокация памяти мапы для хранения ссылок
 
 	mux := http.NewServeMux()
 	mux.HandleFunc("/", createShortURL)
@@ -39,52 +31,31 @@ func main() {
 
 }
 
-// makeShortURL генерирует случайную последовательность из 10 символов
-// Обязательно есть хотя бы одна цифра и буква
-func makeShortURL() string {
-	rand.Seed(time.Now().UnixNano())
 
-	digits := "0123456789_"
-	letters := "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"
-	all := digits + letters
 
-	length := 10
-
-	b := make([]byte, length)
-	b[0] = digits[rand.Intn(len(digits))]
-	b[1] = letters[rand.Intn(len(letters))]
-	for i := 2; i < length; i++ {
-		b[i] = all[rand.Intn(len(all))]
-	}
-	rand.Shuffle(len(b), func(i, j int) {
-		b[i], b[j] = b[j], b[i]
-	})
-
-	return string(b)
-}
 
 // Парсинг данных из формы, генерация случайной ссылки, упаковка данных в Data struct
 func makeData(r *http.Request) (Data, string) {
-	hash := makeShortURL()
+	hash := MakeShortURL()
 	shortURL := "localhost:8080/short/" + hash
 	longURL := r.FormValue("longURL")
-	ExpDays := r.FormValue("ExpDays")
-	timeCreation := time.Now()
-	timeCreationS := timeCreation.Format("2006/01/02") //TODO вынести форматирование
+	expDays := r.FormValue("ExpDays")
+	createdAt := time.Now()
+	
 
-	ExpDaysInt, err := strconv.Atoi(ExpDays)
+	expDaysInt, err := strconv.Atoi(expDays)
 	if err != nil {
-		log.Print(err)
+		log.Print("Ошибка. Введите число!", err)
 	}
 
-	ExpDate := timeCreation.AddDate(0, 0, ExpDaysInt)
-	ExpDateS := ExpDate.Format("2006/01/02")
+	expiredAt := createdAt.AddDate(0, 0, expDaysInt)
+	
 
 	data := Data{
-		LongURL:      longURL,
-		ExpDate:      ExpDateS,
-		CreationDate: timeCreationS,
-		ShortURL:     shortURL,
+		LongURL:        longURL,
+		ExpiredAt:      expiredAt,
+		CreatedAt:		createdAt,
+		ShortURL:       shortURL,
 	}
 
 	return data, hash
@@ -113,10 +84,34 @@ func createShortURL(w http.ResponseWriter, r *http.Request) {
 
 		fmt.Println(data)
 
+		//timeCreationS := timeCreation.Format("2006/01/02") //TODO вынести форматирование
+		//ExpDateS := ExpDate.Format("2006/01/02")
+
 		// TODO: здесь нужен мьютекс или мапу из sync https://pkg.go.dev/sync#Map
 		db[k] = data
 
 		fmt.Println(db) 
+
+		jsonData, err := json.MarshalIndent(data, "", " ")
+		if err != nil {
+			http.Error(w, err.Error(), 500)
+			return
+		}
+
+		fmt.Println("json:", jsonData)
+
+		newJson := Data{}
+
+		err = json.Unmarshal(jsonData, &newJson)
+		if err != nil {
+			http.Error(w, err.Error(), 500)
+			return
+		}
+
+
+		fmt.Println(newJson)
+
+
 
 		tpl.ExecuteTemplate(w, "applyProcess.html", data)
 	default:
