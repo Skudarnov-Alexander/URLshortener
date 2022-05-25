@@ -1,9 +1,9 @@
 package main
 
 import (
-	//"bytes"
-	"testing"
 	"net/http"
+	"net/http/httptest"
+	"testing"
 )
 
 func TestGetCreateShortURL(t *testing.T) {

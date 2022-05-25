@@ -2,18 +2,14 @@ package main
 
 import (
 	"fmt"
+	"html/template"
 	"io"
+	"log"
 	"math/rand"
 	"net/http"
-	"time"
-
-	//"fmt"
-	//"util/short"
-	//"./short/short"
-	"html/template"
-	"log"
 	"strconv"
 	"strings"
+	"time"
 )
 
 type Data struct {
@@ -38,13 +34,12 @@ func main() {
 
 	mux := http.NewServeMux()
 	mux.HandleFunc("/", createShortURL)
-	//mux.HandleFunc("/apply", getLong)
-	mux.HandleFunc("/short/", getShort)
+	mux.HandleFunc("/short/", getShort) 
 	http.ListenAndServe(":8080", mux)
 
 }
 
-// Алгоритм генерации случайной последовательности из 10 символов
+// makeShortURL генерирует случайную последовательность из 10 символов
 // Обязательно есть хотя бы одна цифра и буква
 func makeShortURL() string {
 	rand.Seed(time.Now().UnixNano())
@@ -75,7 +70,7 @@ func makeData(r *http.Request) (Data, string) {
 	longURL := r.FormValue("longURL")
 	ExpDays := r.FormValue("ExpDays")
 	timeCreation := time.Now()
-	timeCreationS := time.Now().Format("2006/01/02")
+	timeCreationS := timeCreation.Format("2006/01/02") //TODO вынести форматирование
 
 	ExpDaysInt, err := strconv.Atoi(ExpDays)
 	if err != nil {
@@ -96,7 +91,7 @@ func makeData(r *http.Request) (Data, string) {
 
 }
 
-// Хэндлеры
+// createShortURL обрабатывает запросы на добавление новой ссылки
 func createShortURL(w http.ResponseWriter, r *http.Request) {
 	if r.URL.Path != "/" {
 		http.NotFound(w, r)
@@ -109,6 +104,7 @@ func createShortURL(w http.ResponseWriter, r *http.Request) {
 	case http.MethodPost:
 		if err := r.ParseForm(); err != nil {
 			fmt.Println(err)
+			// TODO: отдавать ответ клиенту
 			return
 		}
 		fmt.Println(r.Form)
@@ -117,11 +113,10 @@ func createShortURL(w http.ResponseWriter, r *http.Request) {
 
 		fmt.Println(data)
 
+		// TODO: здесь нужен мьютекс или мапу из sync https://pkg.go.dev/sync#Map
 		db[k] = data
 
-		
-
-		fmt.Println(db)
+		fmt.Println(db) 
 
 		tpl.ExecuteTemplate(w, "applyProcess.html", data)
 	default:
@@ -130,28 +125,30 @@ func createShortURL(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+// getShort обрабатывает запросы на получение короткой ссылки
 func getShort(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
 		// Header
 		w.Header().Set("Allow", http.MethodGet)
- 
-        // Код 405
-        http.Error(w, "Method is not allowed! Only GET method is supported.", http.StatusMethodNotAllowed)
-        return
+
+		// Код 405
+		http.Error(w, "Method is not allowed! Only GET method is supported.", http.StatusMethodNotAllowed)
+		return
 
 	}
-	
+
 	path := strings.Split(r.URL.Path, "/")
 	k := path[len(path)-1]
 
 	if _, ok := db[k]; !ok {
-		io.WriteString(w, "Sorry, this short URL is not exist\n")
+		//io.WriteString(w, "Sorry, this short URL is not exist\n")
+		http.Error(w, "Sorry, this short URL is not exist", http.StatusNotFound)
 		return
 	}
 	url := "https://" + db[k].LongURL
 
 	fmt.Println("Redirect ", db[k].LongURL)
 
-	http.Redirect(w, r, url, http.StatusSeeOther)
-	
+	http.Redirect(w, r, url, http.StatusMovedPermanently)
+
 }
