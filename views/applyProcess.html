@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>INDEX</title>
+</head>
+<body>
+
+<p><h1>Шортенер на костылях</h1></p>
+
+  <form action="/apply" method="post">
+    <label for="POST-url">Введи ссылку:</label>
+    <input id="POST-url" type="text" name="longURL">
+    <label for="POST-ExpDays">Введи количество дней:</label>
+    <input id="POST-ExpDays" type="text" name="ExpDays">
+    <input type="submit" value="Save">
+  </form>
+
+
+  <p>Тут результат:</p>
+  <ul>
+    <li>Исходная ссылка: {{.LongURL}}</li>
+    <li>Короткая ссылка: {{.ShortURL}}</li>
+    <li>Дата создания: {{.CreatedAt}}</li>
+    <li>Дата протухания: {{.ExpiredAt}}</li>
+</ul>
+  
+</body>
+</html>
