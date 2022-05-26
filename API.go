@@ -1,12 +1,12 @@
 package main
 
 import (
-	"encoding/json"
 	"fmt"
 	"io"
-	"log"
 	"net/http"
 	"strings"
+
+	js "github.com/Skudarnov-Alexander/URLshortener/json"
 )
 
 // createShortURL обрабатывает запросы на добавление новой ссылки
@@ -16,40 +16,31 @@ func getHome(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func postLongURL(w http.ResponseWriter, r *http.Request) {
+func postLongURLform(w http.ResponseWriter, r *http.Request) {
 
 	if r.Method == http.MethodPost {
-		if err := r.ParseForm(); err != nil {
-			http.Error(w, err.Error(), 500)
-			// TODO: отдавать ответ клиенту
+		// имитация получения JSON с фронта: из запроса парсим r.Form c маршалим в JSON
+		jsonData, err := js.JSONfromFrontend(r)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
+		fmt.Printf("JSON data:\n%s\n", jsonData)
+
+		// валидация данных в JSON (URL и дней действия ссылки)
+		data, err := js.JSONValid(jsonData)
+		if err!= nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
 			return
 		}
 
-		fmt.Println("db до вставки", db)
-
-		k, err := InsertData(r, db)
-		fmt.Println("db после вставки",db)
+		k, err := InsertData(data, db)
 		if err != nil {
 			http.Error(w, err.Error(), 500)
 			return
 		}
 
-		jsonData, err := json.MarshalIndent(db[k], "", " ")
-		if err != nil {
-			http.Error(w, err.Error(), 500)
-			return
-		}
-
-		log.Println("json:", jsonData)
-
-		newJson := UrlData{}
-
-		err = json.Unmarshal(jsonData, &newJson)
-		if err != nil {
-			http.Error(w, err.Error(), 500)
-			return
-		}
-		tpl.ExecuteTemplate(w, "applyProcess.html", db[k])
+		tpl.ExecuteTemplate(w, "applyProcess.html", db[k]) //формат
 
 	} else {
 		io.WriteString(w, "Sorry, only GET and POST methods are supported.\n")

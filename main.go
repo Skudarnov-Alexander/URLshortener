@@ -18,8 +18,8 @@ func main() {
 
 	mux := http.NewServeMux()
 	mux.HandleFunc("/form/", getHome)
-	mux.HandleFunc("/form/ok", postLongURL)
-	mux.HandleFunc("/form/short/", getLongURL)
+	mux.HandleFunc("/form/ok", postLongURLform)
+	mux.HandleFunc("/short/", getLongURL)
 	http.ListenAndServe(":8080", mux)
 
 }
