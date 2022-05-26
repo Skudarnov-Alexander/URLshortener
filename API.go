@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"fmt"
 	"io"
 	"log"
 	"net/http"
@@ -9,29 +10,29 @@ import (
 )
 
 // createShortURL обрабатывает запросы на добавление новой ссылки
-func createShortURL(w http.ResponseWriter, r *http.Request) {
-	if r.URL.Path != "/" {
-		http.NotFound(w, r)
-		return
-	}
-	switch r.Method {
-	case http.MethodGet:
+func getHome(w http.ResponseWriter, r *http.Request) {
+	if r.Method == http.MethodGet {
 		tpl.ExecuteTemplate(w, "home.html", nil)
+	}
+}
 
-	case http.MethodPost:
+func postLongURL(w http.ResponseWriter, r *http.Request) {
+
+	if r.Method == http.MethodPost {
 		if err := r.ParseForm(); err != nil {
 			http.Error(w, err.Error(), 500)
 			// TODO: отдавать ответ клиенту
 			return
 		}
 
+		fmt.Println("db до вставки", db)
+
 		k, err := InsertData(r, db)
+		fmt.Println("db после вставки",db)
 		if err != nil {
 			http.Error(w, err.Error(), 500)
 			return
 		}
-
-		//TODO форматирование time.Time
 
 		jsonData, err := json.MarshalIndent(db[k], "", " ")
 		if err != nil {
@@ -48,18 +49,15 @@ func createShortURL(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, err.Error(), 500)
 			return
 		}
-
-		log.Println(newJson)
-
 		tpl.ExecuteTemplate(w, "applyProcess.html", db[k])
-	default:
-		io.WriteString(w, "Sorry, only GET and POST methods are supported.\n")
 
+	} else {
+		io.WriteString(w, "Sorry, only GET and POST methods are supported.\n")
 	}
 }
 
 // getShort обрабатывает запросы на получение короткой ссылки
-func getShort(w http.ResponseWriter, r *http.Request) {
+func getLongURL(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
 		// Header
 		w.Header().Set("Allow", http.MethodGet)

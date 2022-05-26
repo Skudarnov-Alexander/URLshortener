@@ -17,10 +17,9 @@ func main() {
 	db = make(DataBase) // Аллокация памяти мапы для хранения ссылок
 
 	mux := http.NewServeMux()
-	mux.HandleFunc("/", createShortURL)
-	mux.HandleFunc("/short/", getShort)
+	mux.HandleFunc("/form/", getHome)
+	mux.HandleFunc("/form/ok", postLongURL)
+	mux.HandleFunc("/form/short/", getLongURL)
 	http.ListenAndServe(":8080", mux)
 
 }
-
-
