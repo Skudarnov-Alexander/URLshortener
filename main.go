@@ -1,25 +1,25 @@
 package main
 
 import (
+	api "github.com/Skudarnov-Alexander/URLshortener/api"
+	m "github.com/Skudarnov-Alexander/URLshortener/withdb"
 	"html/template"
 	"net/http"
 )
 
-var tpl *template.Template
-var db DataBase
+var Tpl *template.Template
+var Db m.DataBase
 
 func init() {
-	tpl = template.Must(template.ParseFiles("views/home.html", "views/applyProcess.html"))
-
+	api.LoadTpl()
+	m.InitInternalDB() // Аллокация памяти мапы для хранения ссылок
 }
 
 func main() {
-	db = make(DataBase) // Аллокация памяти мапы для хранения ссылок
-
 	mux := http.NewServeMux()
-	mux.HandleFunc("/form/", getHome)
-	mux.HandleFunc("/form/ok", postLongURLform)
-	mux.HandleFunc("/short/", getLongURL)
+	mux.HandleFunc("/form/", api.GetHome)
+	mux.HandleFunc("/form/ok", api.PostLongURLform)
+	mux.HandleFunc("/short/", api.GetLongURL)
 	http.ListenAndServe(":8080", mux)
 
 }
