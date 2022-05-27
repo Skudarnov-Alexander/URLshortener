@@ -14,6 +14,10 @@ type LongURL struct {
 	ExpiredIn int    `json:"expiredIn"`
 }
 
+type LongURLget struct {
+	ShortURL   string `json:"shorturl"`
+}
+
 // JSONfromFrontend парсит значения от фронта из r.FormValue и маршалит в JSON (type LongURL)
 func JSONfromFrontend(r *http.Request) (jsonData []byte, err error) {
 	if err = r.ParseForm(); err != nil {
@@ -51,6 +55,7 @@ func JSONfromFrontend(r *http.Request) (jsonData []byte, err error) {
 // TODO: валидация на протокол http или https
 // todo если не ввел дату
 // Валидатор и маршаллер данных с формы после отправления длинной ссылки
+// todo valid empty
 func JSONValid(jsonData []byte) (data LongURL, err error) {
 
 	err = json.Unmarshal(jsonData, &data)

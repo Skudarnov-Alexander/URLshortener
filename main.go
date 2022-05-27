@@ -36,7 +36,7 @@ func main() {
 	mux.HandleFunc("/form/ok", api.PostLongURLform)
 	mux.HandleFunc("/short/", api.GetLongURLform)
 	mux.HandleFunc("/", api.PostLongURL)
-	//mux.HandleFunc("/sh/", api.GetLongURL)
+	mux.HandleFunc("/sh/", api.GetLongURL)
 	log.Printf("Server starting...")
 	http.ListenAndServe(":8080", mux)
 	

@@ -6,7 +6,9 @@ import (
 	"fmt"
 	"html/template"
 	"io/ioutil"
+	"log"
 	"net/http"
+	"net/url"
 	"strings"
 
 	js "github.com/Skudarnov-Alexander/URLshortener/json"
@@ -100,13 +102,8 @@ func PostLongURL(w http.ResponseWriter, r *http.Request) {
 
 	
 
-	w.Write([]byte("\n***Data parsing from request.body - DONE\n"))
-	w.Write(body)
-	w.Write([]byte("\n"))
-
+	log.Printf("\n***Data parsing from request.body - DONE\nBody: %s\n", string(body))
 	
-	
-
 	// валидация данных в JSON (URL и дней действия ссылки)
 	data, err := js.JSONValid(body)
 	if err != nil {
@@ -114,18 +111,15 @@ func PostLongURL(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	w.Write([]byte("\n***Validation - DONE\n"))
-	fmt.Println("\nData after validation\n", data)
+	log.Printf("\n***Validation - DONE\nData: %v\n", data)
 
 	k, err := m.InsertData(data, m.InternalDB)
 	if err != nil {
 		http.Error(w, err.Error(), 500)
 		return
 	}
-	_ = k
-	w.Write([]byte("\n***Inserting to Database - DONE\n"))
 
-
+	log.Printf("***Inserting to Database - DONE\n")
 
 	JSONfromDB, err := json.Marshal(m.InternalDB[k]) 
 
@@ -134,34 +128,63 @@ func PostLongURL(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	w.Write([]byte("\n***Marshalling from Database - DONE\n"))
+	log.Printf("***Marshalling from Database - DONE\n")
 
 	w.Write(JSONfromDB)
 	
-	
-	w.Write([]byte("\nBye bye!\n"))
 }
 
-/*
-// getShort обрабатывает запросы на получение короткой ссылки
-func GetLongURLform(w http.ResponseWriter, r *http.Request) {
+
+// getLongURL обрабатывает запросы на получение короткой ссылки
+func GetLongURL(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
-		// Код 405
 		http.Error(w, "Method is not allowed! Only GET method is supported.", http.StatusMethodNotAllowed)
 		return
 
 	}
 
-	path := strings.Split(r.URL.Path, "/")
+	// читаем тело запроса
+	body, err := ioutil.ReadAll(r.Body)
+	if err != nil {
+		http.Error(w, "Unable to parse request body", http.StatusBadRequest)
+		return
+	}
+	defer r.Body.Close()
+
+	data := js.LongURLget{}
+
+	err = json.Unmarshal(body, &data)
+	if err != nil {
+		log.Println("some JSON-marshaller error")
+		return
+	}
+
+	// валидация ссылки в теле запроса
+	_, err = url.ParseRequestURI(data.ShortURL)
+	if err != nil {
+		log.Println("invalid url")
+		return
+	}
+
+	path := strings.Split(data.ShortURL, "/")
 	k := path[len(path)-1]
+
 
 	if _, ok := m.InternalDB[k]; !ok {
 		http.Error(w, "Sorry, this short URL is not exist", http.StatusNotFound)
 		return
 	}
 
-	http.Redirect(w, r, m.InternalDB[k].LongURL, http.StatusMovedPermanently)
+	JSONfromDB, err := json.Marshal(m.InternalDB[k].LongURL) 
 
-} */
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	log.Printf("***Marshalling from Database - DONE\n")
+
+	w.Write(JSONfromDB)
+} 
 
 
