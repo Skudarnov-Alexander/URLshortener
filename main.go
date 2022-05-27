@@ -10,8 +10,10 @@ import (
 	m "github.com/Skudarnov-Alexander/URLshortener/withdb"
 )
 
+
 var Tpl *template.Template
 var Db m.DataBase
+var MyLogger *log.Logger
 
 func init() {
 	api.LoadTpl()		// Загрузка HTML
@@ -19,25 +21,19 @@ func init() {
 }
 
 func main() {
-	nf, err := os.Create("logs")
-	if err != nil {
-		log.Print("Error: creation log file", err)
-		return
-	}
-	log.SetOutput(nf)
-	log.SetPrefix("LOG:")
-	log.SetFlags(19)
-	defer nf.Close()
+
+	MyLogger = log.New(os.Stdout, "log", 19)
+	
 
 
 
 	mux := http.NewServeMux()
 	mux.HandleFunc("/form/", api.GetHome)
-	mux.HandleFunc("/form/ok", api.PostLongURLform)
+	//mux.HandleFunc("/form/ok", api.PostLongURLform)
 	mux.HandleFunc("/short/", api.GetLongURLform)
 	mux.HandleFunc("/", api.PostLongURL)
 	mux.HandleFunc("/sh/", api.GetLongURL)
-	log.Printf("Server starting...")
+	MyLogger.Printf("Server starting...")
 	http.ListenAndServe(":8080", mux)
 	
 

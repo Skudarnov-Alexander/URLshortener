@@ -1,17 +1,19 @@
-package methods
+package api
 
 import (
 	//"encoding/json"
 	"encoding/json"
-	"fmt"
 	"html/template"
 	"io/ioutil"
 	"log"
 	"net/http"
 	"net/url"
 	"strings"
+	"time"
 
+	datatype "github.com/Skudarnov-Alexander/URLshortener/internal/url"
 	js "github.com/Skudarnov-Alexander/URLshortener/json"
+	sh "github.com/Skudarnov-Alexander/URLshortener/utils"
 	m "github.com/Skudarnov-Alexander/URLshortener/withdb"
 )
 
@@ -23,11 +25,12 @@ func LoadTpl() {
 
 // GetHome открывает главную страницу
 func GetHome(w http.ResponseWriter, r *http.Request) {
+	//MyLogger.Println("GET GET GET")
 	if r.Method == http.MethodGet {
 		Tpl.ExecuteTemplate(w, "home.html", nil)
 	}
 }
-
+/*
 // PostLongURLform отправляет сдлинную ссылку в сервис через форму на фронте
 func PostLongURLform(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
@@ -59,7 +62,7 @@ func PostLongURLform(w http.ResponseWriter, r *http.Request) {
 
 	Tpl.ExecuteTemplate(w, "applyProcess.html", m.InternalDB[k]) //формат
 }
-
+*/
 // GetLongURLform получает оригинальную длинную ссылку -- > редиректит сразу на нее
 func GetLongURLform(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
@@ -89,50 +92,60 @@ func GetLongURLform(w http.ResponseWriter, r *http.Request) {
 
 func PostLongURL(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
-		http.Error(w, "Method is not allowed! Only POST method is supported.", http.StatusMethodNotAllowed)
+		ResponseMethodNotAllowed("Only POST method is supported.", w)
 		return
-
 	}
-	body, err := ioutil.ReadAll(r.Body)
+
+	URLItem := new(datatype.UrlInfo)
+
+	err := json.NewDecoder(r.Body).Decode(URLItem)
 	if err != nil {
-		http.Error(w, "Unable to parse request body", http.StatusBadRequest)
+		ResponseBadRequest("Parsing request body error", w)
+	}
+
+	// JSON data validation
+	if URLItem.LongURL == "" {
+		ResponseBadRequest("Empty URL", w)
 		return
 	}
-	defer r.Body.Close()
 
+	if _, err = url.ParseRequestURI(URLItem.LongURL); err != nil {
+		ResponseBadRequest("Incorrect URL", w)
+		return
+	}
+
+	if URLItem.ExpiredIn < 0 {
+		ResponseBadRequest("Days have negative value", w)
+		return
+	}
+
+	// Preparing additional data
+	k := sh.MakeShortURL()
+	URLItem.ShortURL = "localhost:8080/short/" + k
+	URLItem.CreatedAt = time.Now()
+	if URLItem.ExpiredIn == 0 {
+		URLItem.ExpiredIn = 365
+	}
+
+	URLItem.ExpiredAt = URLItem.CreatedAt.AddDate(0, 0, URLItem.ExpiredIn)
+
+	// add item to Database
+	err = m.InternalDB.Insert(URLItem)
+	if err != nil {
+		ResponseBadRequest("This short URL is already exist", w)
+		return
+	}
 	
-
-	log.Printf("\n***Data parsing from request.body - DONE\nBody: %s\n", string(body))
-	
-	// валидация данных в JSON (URL и дней действия ссылки)
-	data, err := js.JSONValid(body)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		return
+	resp := APIResponse{
+		Code:	http.StatusCreated,  				
+		Data:	*URLItem,
 	}
 
-	log.Printf("\n***Validation - DONE\nData: %v\n", data)
-
-	k, err := m.InsertData(data, m.InternalDB)
-	if err != nil {
-		http.Error(w, err.Error(), 500)
-		return
-	}
-
-	log.Printf("***Inserting to Database - DONE\n")
-
-	JSONfromDB, err := json.Marshal(m.InternalDB[k]) 
-
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		return
-	}
-
-	log.Printf("***Marshalling from Database - DONE\n")
-
-	w.Write(JSONfromDB)
-	
+	w.WriteHeader(http.StatusCreated)
+	json.NewEncoder(w).Encode(resp)
 }
+
+
 
 
 // getLongURL обрабатывает запросы на получение короткой ссылки
@@ -181,8 +194,6 @@ func GetLongURL(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
-
-	log.Printf("***Marshalling from Database - DONE\n")
 
 	w.Write(JSONfromDB)
 } 
