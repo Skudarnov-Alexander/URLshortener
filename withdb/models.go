@@ -59,5 +59,4 @@ func InsertData(data js.LongURL, db DataBase) (key string, err error) {
 	return
 }
 
-// curl -X POST -H "Content-Type: application/json" \
-// -d '{"longurl": "www.google.com", "expiredIn": "5"}' localhost:8080
+
