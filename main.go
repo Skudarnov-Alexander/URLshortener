@@ -16,7 +16,7 @@ var Db m.DataBase
 var MyLogger *log.Logger
 
 func init() {
-	api.LoadTpl()		// Загрузка HTML
+	//api.LoadTpl()		// Загрузка HTML
 	m.InitInternalDB()  // Аллокация памяти мапы для хранения ссылок
 }
 
@@ -28,9 +28,9 @@ func main() {
 
 
 	mux := http.NewServeMux()
-	mux.HandleFunc("/form/", api.GetHome)
+	//mux.HandleFunc("/form/", api.GetHome)
 	//mux.HandleFunc("/form/ok", api.PostLongURLform)
-	mux.HandleFunc("/short/", api.GetLongURLform)
+	//mux.HandleFunc("/short/", api.GetLongURLform)
 	mux.HandleFunc("/", api.PostLongURL)
 	mux.HandleFunc("/sh/", api.GetLongURL)
 	MyLogger.Printf("Server starting...")

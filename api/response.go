@@ -8,14 +8,18 @@ import (
 )
 
 type APIResponse struct {
-	Code    int32  		`json:"code"`
-	Type    string 		`json:"type"`
-	Message string 		`json:"message"`
-	Data	u.UrlInfo 	`json:"data"`
+	Code    int32  		`json:"code,omitempty"`
+	Message string 		`json:"message,omitempty"`
+	Data	u.UrlInfo 	`json:"data,omitempty"`
+}
+
+type APIResponseError struct {
+	Code    int32  		`json:"code,omitempty"`
+	Message string 		`json:"message,omitempty"`
 }
 
 func ResponseBadRequest(msg string, w http.ResponseWriter) {
-	res := APIResponse {
+	res := APIResponseError {
 		Code: http.StatusBadRequest,
 		Message: msg,
 	}
@@ -24,8 +28,17 @@ func ResponseBadRequest(msg string, w http.ResponseWriter) {
 	json.NewEncoder(w).Encode(res)
 }
 
+func ResponseNotFound(msg string, w http.ResponseWriter) {
+	res := APIResponseError {
+		Code: http.StatusBadRequest,
+		Message: msg,
+	}
+	w.WriteHeader(http.StatusNotFound)
+	json.NewEncoder(w).Encode(res)
+}
+
 func ResponseMethodNotAllowed(msg string, w http.ResponseWriter) {
-	res := APIResponse {
+	res := APIResponseError {
 		Code: http.StatusMethodNotAllowed,
 		Message: msg,
 	}
