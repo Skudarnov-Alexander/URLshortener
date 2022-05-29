@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	u "github.com/Skudarnov-Alexander/URLshortener/internal/url"
+	l "github.com/Skudarnov-Alexander/URLshortener/internal/log"
 	
 )
 
@@ -27,6 +28,7 @@ func ResponseBadRequest(msg string, w http.ResponseWriter) {
 
 	w.WriteHeader(http.StatusBadRequest)
 	json.NewEncoder(w).Encode(res)
+	l.Logger.Print(msg)
 }
 
 func ResponseNotFound(msg string, w http.ResponseWriter) {
@@ -36,6 +38,7 @@ func ResponseNotFound(msg string, w http.ResponseWriter) {
 	}
 	w.WriteHeader(http.StatusNotFound)
 	json.NewEncoder(w).Encode(res)
+	l.Logger.Print(msg)
 }
 
 func ResponseMethodNotAllowed(msg string, w http.ResponseWriter) {
@@ -45,6 +48,7 @@ func ResponseMethodNotAllowed(msg string, w http.ResponseWriter) {
 	}
 	w.WriteHeader(http.StatusMethodNotAllowed)
 	json.NewEncoder(w).Encode(res)
+	l.Logger.Print(msg)
 }
 
 
