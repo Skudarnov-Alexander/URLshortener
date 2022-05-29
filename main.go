@@ -4,10 +4,10 @@ import (
 	"html/template"
 	"log"
 	"net/http"
-	"os"
 
-	api "github.com/Skudarnov-Alexander/URLshortener/api"
-	m "github.com/Skudarnov-Alexander/URLshortener/withdb"
+	api "github.com/Skudarnov-Alexander/URLshortener/internal/restapi"
+	m "github.com/Skudarnov-Alexander/URLshortener/internal/url/withdb"
+	l "github.com/Skudarnov-Alexander/URLshortener/internal/log"
 )
 
 
@@ -21,8 +21,8 @@ func init() {
 }
 
 func main() {
-
-	MyLogger = log.New(os.Stdout, "log", 19)
+	m.InitInternalDB()
+	l.InitLogger()
 	
 
 
@@ -33,7 +33,7 @@ func main() {
 	//mux.HandleFunc("/short/", api.GetLongURLform)
 	mux.HandleFunc("/", api.PostLongURL)
 	mux.HandleFunc("/sh/", api.GetLongURL)
-	MyLogger.Printf("Server starting...")
+	l.Logger.Print("Server is starting.....")
 	http.ListenAndServe(":8080", mux)
 	
 

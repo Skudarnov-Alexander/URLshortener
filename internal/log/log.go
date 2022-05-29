@@ -1,6 +1,7 @@
-package log
+package logger
 
 import (
+	"fmt"
 	"log"
 	"os"
 )
@@ -25,12 +26,21 @@ func InitLogger() (l *log.Logger, err error) {
 
 */
 
-func InitLogger() (logger *log.Logger) {
-		
-	logger = log.New(os.Stdout, "LOG", 19)
+var Logger *log.Logger
 
-	return logger
+func InitLogger() {
+	
+	nf, err := os.Create("./internal/log/logs")
+	//os.Chdir("./intenal/log")
+	nf.Chdir()
+	Logger = log.New(nf, "LOG", 19)
+
+	if err != nil {
+		fmt.Println("loger error")
+		return
+	}
 }
+
 
 /*
 

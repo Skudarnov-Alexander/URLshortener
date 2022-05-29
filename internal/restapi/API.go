@@ -11,8 +11,9 @@ import (
 	"time"
 
 	datatype "github.com/Skudarnov-Alexander/URLshortener/internal/url"
-	sh "github.com/Skudarnov-Alexander/URLshortener/utils"
-	m "github.com/Skudarnov-Alexander/URLshortener/withdb"
+	sh "github.com/Skudarnov-Alexander/URLshortener/internal/utils"
+	m "github.com/Skudarnov-Alexander/URLshortener/internal/url/withdb"
+	l "github.com/Skudarnov-Alexander/URLshortener/internal/log"
 )
 
 //// API без фронта
@@ -23,7 +24,9 @@ import (
 
 func PostLongURL(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
-		ResponseMethodNotAllowed("Only POST method is supported.", w)
+		msg := "Only POST method is supported."
+		ResponseMethodNotAllowed(msg, w)
+		l.Logger.Print(msg)
 		return
 	}
 
@@ -31,23 +34,31 @@ func PostLongURL(w http.ResponseWriter, r *http.Request) {
 
 	err := json.NewDecoder(r.Body).Decode(URLItem)
 	if err != nil {
-		ResponseBadRequest("Parsing request body error: "+ err.Error(), w)
+		msg := "Parsing request body error: " + err.Error()
+		ResponseBadRequest(msg, w)
+		l.Logger.Print(msg)
 		return
 	}
 
 	// JSON data validation
 	if URLItem.LongURL == "" {
-		ResponseBadRequest("Empty URL", w)
+		msg := "Empty URL"
+		ResponseBadRequest(msg, w)
+		l.Logger.Print(msg)
 		return
 	}
 
 	if _, err = url.ParseRequestURI(URLItem.LongURL); err != nil {
-		ResponseBadRequest("Incorrect URL: " + err.Error(), w)
+		msg := "Incorrect URL: " + err.Error()
+		ResponseBadRequest(msg, w)
+		l.Logger.Print(msg)
 		return
 	}
 
 	if URLItem.ExpiredIn < 0 {
-		ResponseBadRequest("Days have negative value", w)
+		msg := "Days have negative value"
+		ResponseBadRequest(msg, w)
+		l.Logger.Print(msg)
 		return
 	}
 
@@ -64,7 +75,9 @@ func PostLongURL(w http.ResponseWriter, r *http.Request) {
 	// add item to Database
 	err = m.InternalDB.Insert(URLItem)
 	if err != nil {
-		ResponseBadRequest("This short URL is already exist", w)
+		msg := "This short URL is already exist"
+		ResponseBadRequest(msg, w)
+		l.Logger.Print(msg)
 		return
 	}
 	
