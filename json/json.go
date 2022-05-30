@@ -17,7 +17,7 @@ type LongURL struct {
 }
 
 type LongURLget struct {
-	ShortURL   string `json:"shorturl"`
+	ShortURL string `json:"shorturl"`
 }
 
 // JSONfromFrontend парсит значения от фронта из r.FormValue и маршалит в JSON (type LongURL)

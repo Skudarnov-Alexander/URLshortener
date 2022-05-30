@@ -1,16 +1,14 @@
 package api
 
+/*
 import (
 	"bytes"
 	"net/http"
 	"net/http/httptest"
 	"testing"
-	//js "github.com/Skudarnov-Alexander/URLshortener/json"
 )
 
 
-
-/*
 func PostLongURL(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		http.Error(w, "Method is not allowed! Only POST method is supported.", http.StatusMethodNotAllowed)
@@ -58,7 +56,7 @@ func PostLongURL(w http.ResponseWriter, r *http.Request) {
 
 }
 
-*/
+
 func TestPostLongURL(t *testing.T) {
 	// Создаем запрос с указанием нашего хендлера. Так как мы тестируем GET-эндпоинт
 	// то нам не нужно передавать тело, поэтому третьим аргументом передаем nil
@@ -66,7 +64,7 @@ func TestPostLongURL(t *testing.T) {
 
 	testCase := struct {
 		LongURL   string
-		ExpiredIn int 
+		ExpiredIn int
 	}{
 		LongURL:   "http://www.google.com",
 		ExpiredIn: 5,
@@ -78,7 +76,7 @@ func TestPostLongURL(t *testing.T) {
 
 	b := bytes.NewBufferString(str)
 
-	
+
 	req, err := http.NewRequest("POST", "localhost:8080/", b)
 	if err != nil {
 		t.Fatal(err)
@@ -107,3 +105,4 @@ func TestPostLongURL(t *testing.T) {
 			rr.Body.String(), expected)
 	}
 }
+*/
